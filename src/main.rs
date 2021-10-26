@@ -2,14 +2,14 @@
 extern crate rocket;
 extern crate dotenv;
 
+use rocket::response::content::Html;
+use std::env;
+
+use askama::Template;
 use dotenv::dotenv;
 use rocket::response;
 use rocket::response::Redirect;
 use rocket::response::Responder;
-use rocket_dyn_templates::Template;
-use std::collections::HashMap;
-use std::env;
-
 use rocket::http::Status;
 use rocket::request;
 use rocket::request::FromRequest;
@@ -18,12 +18,15 @@ use rocket::Request;
 use rocket::Response;
 
 #[get("/")]
-fn index() -> Template {
-    let ctx: HashMap<&str, &str> = HashMap::from([(
-        "fun_fact",
-        "The airspeed velocity of an unladen swallow is 9 meters per second.",
-    )]);
-    Template::render("linktree", ctx)
+fn index() -> Html<String> {
+    let fun_fact = "The airspeed velocity of an unladen swallow is 9 meters per second.";
+    Html(LinktreeTemplate { fun_fact }.render().unwrap())
+}
+
+#[derive(Template)]
+#[template(path = "linktree.html")]
+struct LinktreeTemplate<'a> {
+    fun_fact: &'a str,
 }
 
 #[get("/cool-news")]
@@ -97,7 +100,7 @@ fn rocket() -> _ {
     ensure_environment("ADMIN_USER");
     ensure_environment("ADMIN_PASSWORD");
 
-    rocket::build().attach(Template::fairing()).mount(
+    rocket::build().mount(
         "/",
         routes![index, cool_news, admin_authenticated, admin_unauthenticated],
     )

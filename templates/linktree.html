@@ -31,7 +31,7 @@
         }
 
         .container {
-            max-width: 300px;
+            max-width: 370px;
             font-size: 16pt;
             padding: 10px;
         }
@@ -43,6 +43,24 @@
 
         ul {
             text-align: left;
+            list-style: none;
+            padding: 0px;
+        }
+
+        ul li:before {
+            content: '>';
+            margin: 0 1em;
+            color: yellow;
+        }
+
+        .blink {
+            animation: blinker 1s infinite;
+        }
+        
+        @keyframes blinker {
+            from { opacity: 1.0; }
+            50% { opacity: 0.0; }
+            to { opacity: 1.0; }
         }
     </style>
     <title>Astrid's Arm</title>
@@ -51,8 +69,8 @@
 <body>
     <div class="container-outer">
         <div class="container">
-            <h1>Arm QR</h1>
-            <p>Fun fact: {{ fun_fact }}</p>
+            <h1>Astrid's Arm</h1>
+            <p>It seems you scanned my arm! Or navigated here yourself.</p>
 
             <ul>
                 <li><a href="https://astrid.tech">astrid.tech</a></li>
@@ -60,6 +78,8 @@
                 <li><a href="https://github.com/astralbijection">Github</a></li>
                 <li><a href="/cool-news">Cool news</a></li>
             </ul>
+
+            <p>Fun fact: {{ fun_fact }} <span class="blink">&#x2588;</span></p>
         </div>
     </div>
 </body>
