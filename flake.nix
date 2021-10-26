@@ -70,6 +70,17 @@
         rec {
           packages.${name} = project.rootCrate.build;
 
+          dockerImages.${name} = 
+            let 
+              app = self.packages.${system}.${name};
+            in pkgs.dockerTools.buildImage {
+              name = "${name}";
+              contents = app;
+              config = {
+                Cmd = [ "${app}/bin/${name}" ];
+              };
+            };
+
           # `nix build`
           defaultPackage = packages.${name};
 
