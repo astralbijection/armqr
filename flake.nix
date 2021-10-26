@@ -56,12 +56,21 @@
                 # configure non-Rust dependencies (see below) here.
                 ${name} = oldAttrs: {
                   inherit buildInputs nativeBuildInputs;
+                  installPhase = oldAttrs.installPhase or "" + ''
+                    mkdir -p $out/bin $out/lib $out/templates
+                    cp -r ${./templates}/* $out/templates
+                    cp target/bin/${name} $out/bin
+                  '';
+
+                  postInstall = oldAttrs.postInstall or "" + ''
+                    wrapProgram $out/bin/${name} --set ROCKET_TEMPLATE_DIR $out/templates
+                  '';
                 } // buildEnvVars;
               };
             };
 
           # Configuration for the non-Rust dependencies
-          buildInputs = with pkgs; [ openssl.dev ];
+          buildInputs = with pkgs; [ openssl.dev makeWrapper ];
           nativeBuildInputs = with pkgs; [ rustc cargo pkgconfig nixpkgs-fmt ];
           buildEnvVars = {
             PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
