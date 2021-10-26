@@ -31,9 +31,6 @@
             overlays = [
               rust-overlay.overlay
               (self: super: {
-                # Because rust-overlay bundles multiple rust packages into one
-                # derivation, specify that mega-bundle here, so that crate2nix
-                # will use them automatically.
                 rustc = self.rust-bin.nightly.latest.default;
                 cargo = self.rust-bin.nightly.latest.default;
               })
@@ -49,22 +46,9 @@
               src = ./.;
             })
             {
-              # Individual crate overrides go here
-              # Example: https://github.com/balsoft/simple-osd-daemons/blob/6f85144934c0c1382c7a4d3a2bbb80106776e270/flake.nix#L28-L50
               defaultCrateOverrides = pkgs.defaultCrateOverrides // {
-                # The app crate itself is overriden here. Typically we
-                # configure non-Rust dependencies (see below) here.
                 ${name} = oldAttrs: {
                   inherit buildInputs nativeBuildInputs;
-                  installPhase = oldAttrs.installPhase or "" + ''
-                    mkdir -p $out/bin $out/lib $out/templates
-                    cp -r ${./templates}/* $out/templates
-                    cp target/bin/${name} $out/bin
-                  '';
-
-                  postInstall = oldAttrs.postInstall or "" + ''
-                    wrapProgram $out/bin/${name} --set ROCKET_TEMPLATE_DIR $out/templates
-                  '';
                 } // buildEnvVars;
               };
             };
