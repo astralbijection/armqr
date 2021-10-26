@@ -8,7 +8,11 @@ USER vscode
 
 RUN rustup default nightly
 RUN rustup component add rustfmt
-RUN cargo install diesel_cli cargo-add
+RUN rustup component add clippy
+RUN rustup component add rust-analysis
+RUN rustup component add rust-src
+RUN rustup component add rls
+RUN cargo install cargo-add
 
 # [Optional] Uncomment this section to install additional packages.
 # RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \

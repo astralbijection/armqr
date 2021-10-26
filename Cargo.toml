@@ -1,10 +1,8 @@
 [package]
+edition = "2021"
 name = "armqr"
 version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+base64 = "*"
+dotenv = "*"
 rocket = "0.5.0-rc.1"
-rocket-basicauth = "2.1.1"

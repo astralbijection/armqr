@@ -15,8 +15,9 @@ dependencies = [
 name = "armqr"
 version = "0.1.0"
 dependencies = [
+ "base64",
+ "dotenv",
  "rocket",
- "rocket-basicauth",
 ]
 
 [[package]]
@@ -192,6 +193,12 @@ name = "discard"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "212d0f5754cb6769937f4501cc0e67f4f4483c8d2c3e1e922ee9edbe4ab4c7c0"
+
+[[package]]
+name = "dotenv"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
 
 [[package]]
 name = "either"
@@ -881,17 +888,6 @@ dependencies = [
  "ubyte",
  "version_check",
  "yansi",
-]
-
-[[package]]
-name = "rocket-basicauth"
-version = "2.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "79128c0f55b7bc6785c13816d71af4baee156bd615b09468800edaaa7da56a08"
-dependencies = [
- "base64",
- "log",
- "rocket",
 ]
 
 [[package]]
