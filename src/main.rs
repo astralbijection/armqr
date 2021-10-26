@@ -4,6 +4,7 @@ extern crate dotenv;
 
 use dotenv::dotenv;
 use rocket::response;
+use rocket::response::Redirect;
 use rocket::response::Responder;
 use rocket_dyn_templates::Template;
 use std::collections::HashMap;
@@ -18,8 +19,17 @@ use rocket::Response;
 
 #[get("/")]
 fn index() -> Template {
-    let ctx = HashMap::<&str, &str>::new();
+    let ctx: HashMap<&str, &str> = HashMap::from([(
+        "fun_fact",
+        "The airspeed velocity of an unladen swallow is 9 meters per second.",
+    )]);
     Template::render("linktree", ctx)
+}
+
+#[get("/cool-news")]
+fn cool_news() -> Redirect {
+    // An interesting CNN report
+    Redirect::to("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
 }
 
 #[derive(Debug)]
@@ -89,6 +99,6 @@ fn rocket() -> _ {
 
     rocket::build().attach(Template::fairing()).mount(
         "/",
-        routes![index, admin_authenticated, admin_unauthenticated],
+        routes![index, cool_news, admin_authenticated, admin_unauthenticated],
     )
 }
