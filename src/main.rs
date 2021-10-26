@@ -5,6 +5,8 @@ extern crate dotenv;
 use dotenv::dotenv;
 use rocket::response;
 use rocket::response::Responder;
+use rocket_dyn_templates::Template;
+use std::collections::HashMap;
 use std::env;
 
 use rocket::http::Status;
@@ -15,8 +17,9 @@ use rocket::Request;
 use rocket::Response;
 
 #[get("/")]
-fn index() -> String {
-    String::from("test")
+fn index() -> Template {
+    let ctx = HashMap::<&str, &str>::new();
+    Template::render("linktree", ctx)
 }
 
 #[derive(Debug)]
@@ -84,7 +87,7 @@ fn rocket() -> _ {
     ensure_environment("ADMIN_USER");
     ensure_environment("ADMIN_PASSWORD");
 
-    rocket::build().mount(
+    rocket::build().attach(Template::fairing()).mount(
         "/",
         routes![index, admin_authenticated, admin_unauthenticated],
     )

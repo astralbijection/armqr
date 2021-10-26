@@ -6,3 +6,6 @@ version = "0.1.0"
 base64 = "*"
 dotenv = "*"
 rocket = "0.5.0-rc.1"
+[dependencies.rocket_dyn_templates]
+version = "0.1.0-rc.1"
+features = ["tera"]
