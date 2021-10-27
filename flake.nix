@@ -67,7 +67,7 @@
             let 
               app = self.packages.${system}.${name};
             in pkgs.dockerTools.buildImage {
-              name = "${name}";
+              name = "ghcr.io/astralbijection/${name}";
               contents = app;
               config = {
                 Cmd = [ "${app}/bin/${name}" ];
