@@ -14,7 +14,7 @@
 
         <p>
             <strong>Current profile:</strong>
-            <a href="/admin/profiles/{{current_profile.id}}">{{current_profile.name}}</a>
+            <a href="/admin/profiles/{{config.current_profile.id}}">{{config.current_profile.name}}</a>
         </p>
 
         <h2>Create profile</h2>
@@ -36,12 +36,12 @@
                 </tr>
             </thead>
             <tbody>
-            {% for profile in profiles %}
-                <tr id="row={{p.id}}">
+            {% for profile in config.profiles %}
+                <tr id="row={{profile.id}}">
                     <th><a href="/admin/profiles/{{profile.id}}">{{profile.name}}</a></th>
                     <td>
                         <form method="PUT" action="/admin/activeProfile">
-                            {% if profile.id == current_profile.id %} 
+                            {% if profile.id == config.current_profile.id %} 
                                 <input
                                     type="submit"
                                     class="btn btn-primary btn-sm"
@@ -57,13 +57,13 @@
                         </form>
                     <td>
                         <form method="DELETE" action="/admin/profiles/{{profile.id}}">
-                            {% if p.locked %}
+                            {% if profile.is_locked() %}
                             <input
                                 type="submit"
                                 class="btn btn-danger btn-sm"
                                 value="Locked"
                                 disabled>
-                            {% else if profile.id == current_profile.id %}
+                            {% else if profile.id == config.current_profile.id %}
                             <input
                                 type="submit"
                                 class="btn btn-danger btn-sm"

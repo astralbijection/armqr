@@ -1,21 +1,25 @@
+mod admin;
+mod config;
+
 #[macro_use]
 extern crate rocket;
+#[macro_use]
+extern crate serde;
 extern crate dotenv;
 
+use crate::admin::admin_page;
+use crate::admin::admin_unauthenticated;
+use crate::config::ConfigFile;
 use rocket::response::content::Html;
+use rocket::tokio::sync::Mutex;
 use std::env;
+use std::path::PathBuf;
+use std::sync::Arc;
 
 use askama::Template;
 use dotenv::dotenv;
-use rocket::response;
 use rocket::response::Redirect;
 use rocket::response::Responder;
-use rocket::http::Status;
-use rocket::request;
-use rocket::request::FromRequest;
-use rocket::request::Outcome;
-use rocket::Request;
-use rocket::Response;
 
 #[get("/")]
 fn index() -> Html<String> {
@@ -35,63 +39,14 @@ fn cool_news() -> Redirect {
     Redirect::to("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
 }
 
-#[derive(Debug)]
-struct RequiresBasicAuthentication;
-
-impl<'r> Responder<'r, 'static> for RequiresBasicAuthentication {
-    fn respond_to(self, _: &'r Request<'_>) -> response::Result<'static> {
-        Ok(Response::build()
-            .status(Status::new(401))
-            .raw_header("WWW-Authenticate", "Basic")
-            .finalize())
-    }
-}
-
-struct AdminUser;
-
-#[rocket::async_trait]
-impl<'r> FromRequest<'r> for AdminUser {
-    type Error = RequiresBasicAuthentication;
-
-    async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error> {
-        let expected_auth = format!(
-            "Basic {}",
-            base64::encode(
-                format!(
-                    "{}:{}",
-                    env::var("ADMIN_USER").unwrap(),
-                    // Yes, the password is plaintext. Yes, I use a password manager.
-                    env::var("ADMIN_PASSWORD").unwrap()
-                )
-                .as_bytes()
-            )
-        );
-
-        if let Some(header) = req.headers().get_one("Authorization") {
-            if header.trim() == expected_auth {
-                return Outcome::Success(AdminUser);
-            }
-            return Outcome::Failure((Status::Forbidden, RequiresBasicAuthentication));
-        }
-
-        Outcome::Forward(())
-    }
-}
-
-#[get("/admin", rank = 2)]
-fn admin_unauthenticated() -> RequiresBasicAuthentication {
-    RequiresBasicAuthentication
-}
-
-#[get("/admin", rank = 1)]
-fn admin_authenticated(_admin: AdminUser) -> String {
-    String::from("yay")
-}
-
 fn ensure_environment(key: &str) {
     if env::var(key).is_err() {
         panic!("Required environment variable not provided: {}", key)
     }
+}
+
+pub struct ArmQRState {
+    config: Arc<Mutex<ConfigFile>>,
 }
 
 #[launch]
@@ -100,8 +55,12 @@ fn rocket() -> _ {
     ensure_environment("ADMIN_USER");
     ensure_environment("ADMIN_PASSWORD");
 
-    rocket::build().mount(
+    let state = ArmQRState {
+        config: Arc::new(Mutex::new(ConfigFile::new(PathBuf::from("./armqr.json")))),
+    };
+
+    rocket::build().manage(state).mount(
         "/",
-        routes![index, cool_news, admin_authenticated, admin_unauthenticated],
+        routes![index, cool_news, admin_page, admin_unauthenticated],
     )
 }
