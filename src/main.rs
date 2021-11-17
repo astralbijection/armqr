@@ -9,6 +9,7 @@ extern crate dotenv;
 
 use crate::admin::admin_page;
 use crate::admin::admin_unauthenticated;
+use crate::admin::new_profile_form;
 use crate::config::ConfigFile;
 use rocket::response::content::Html;
 use rocket::tokio::sync::Mutex;
@@ -61,6 +62,12 @@ fn rocket() -> _ {
 
     rocket::build().manage(state).mount(
         "/",
-        routes![index, cool_news, admin_page, admin_unauthenticated],
+        routes![
+            index,
+            cool_news,
+            admin_page,
+            admin_unauthenticated,
+            new_profile_form
+        ],
     )
 }

@@ -1,10 +1,17 @@
+use rocket::form::Form;
 use std::env;
+use uuid::Uuid;
 
-use crate::Responder;
+use crate::{
+    config::{Action, Profile},
+    Responder,
+};
 use rocket::{
+    form::FromForm,
     http::Status,
     request::{FromRequest, Outcome},
-    response, Request, Response,
+    response::{self, Redirect},
+    Request, Response,
 };
 
 use askama::Template;
@@ -16,6 +23,7 @@ use crate::{config::Config, ArmQRState};
 #[template(path = "admin.html")]
 pub struct AdminPage<'a> {
     pub config: &'a Config,
+    pub error: &'a str,
 }
 
 #[derive(Debug)]
@@ -66,12 +74,54 @@ pub fn admin_unauthenticated() -> RequiresBasicAuthentication {
     RequiresBasicAuthentication
 }
 
-#[get("/admin", rank = 1)]
-pub async fn admin_page(_admin: AdminUser, state: &State<ArmQRState>) -> Html<String> {
+#[get("/admin?<error>", rank = 1)]
+pub async fn admin_page(
+    _admin: AdminUser,
+    error: &'_ str,
+    state: &State<ArmQRState>,
+) -> Html<String> {
     let page = {
         let lock = state.config.lock().await;
         let config = lock.read();
-        AdminPage { config }.render().unwrap()
+        AdminPage { config, error }.render().unwrap()
     };
     Html(page)
+}
+
+#[derive(FromForm)]
+pub struct NewProfileForm<'r> {
+    name: Option<&'r str>,
+    redirect_uri: &'r str,
+}
+
+#[post("/admin/profiles", data = "<form>")]
+pub async fn new_profile_form(
+    form: Form<NewProfileForm<'_>>,
+    state: &State<ArmQRState>,
+) -> Redirect {
+    if form.redirect_uri.is_empty() {
+        return Redirect::to("/admin?error=bad_uri");
+    }
+
+    let mut config = {
+        let lock = state.config.lock().await;
+        lock.read().clone()
+    };
+
+    let name = match form.name {
+        Some(x) => x.to_string(),
+        None => format!("Redirect: {}", form.redirect_uri),
+    };
+    config.profiles.push(Profile {
+        id: Uuid::new_v4(),
+        name,
+        action: Action::Redirect(form.redirect_uri.to_string()),
+    });
+
+    {
+        let mut lock = state.config.lock().await;
+        lock.store(config).await;
+    }
+
+    Redirect::to("/admin")
 }

@@ -12,6 +12,13 @@
     <div class="container">
         <h1>Admin Panel</h1>
 
+
+        {% if error == "bad_uri" %}
+            <div class="alert alert-danger" role="alert">
+                You supplied an empty URL!
+            </div>
+        {% endif %}
+
         <p>
             <strong>Current profile:</strong>
             <a href="/admin/profiles/{{config.current_profile.id}}">{{config.current_profile.name}}</a>
@@ -21,7 +28,7 @@
         <form method="POST" action="/admin/profiles">
             <div class="input-group mb-3">
                 <span class="input-group-text" id="basic-addon2"><strong>Quick URL</strong></span>
-                <input type="text" class="form-control" placeholder="https://astrid.tech" name="redirect_url">
+                <input type="text" class="form-control" placeholder="https://astrid.tech" name="redirect_uri">
                 <input type="submit" class="btn btn-outline-success" id="basic-addon2" value="Set">
             </div>
         </form>
