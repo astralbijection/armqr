@@ -46,7 +46,7 @@
                 <tr id="row={{id}}">
                     <th><a href="/admin/profiles/{{id}}">{{profile.name}}</a></th>
                     <td>
-                        <form method="POST" action="/admin/activeProfile">
+                        <form method="POST" action="/admin/activateProfile">
                             {% if id.clone() == config.current_profile_id %} 
                                 <input
                                     type="submit"
@@ -62,7 +62,7 @@
                             <input type="hidden" name="id" value="{{id}}">
                         </form>
                     <td>
-                        <form method="DELETE" action="/admin/profiles/{{id}}">
+                        <form method="POST" action="/admin/deleteProfile">
                             {% if profile.is_locked() %}
                             <input
                                 type="submit"
@@ -81,6 +81,7 @@
                                 class="btn btn-danger btn-sm"
                                 value="Delete">
                             {% endif %}
+                            <input type="hidden" name="id" value="{{id}}">
                         </form>
                     </td>
                 </tr> 

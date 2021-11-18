@@ -8,6 +8,7 @@ extern crate serde;
 extern crate dotenv;
 
 use crate::admin::activate_profile_form;
+use crate::admin::delete_profile_form;
 use crate::admin::admin_page;
 use crate::admin::admin_unauthenticated;
 use crate::admin::new_profile_form;
@@ -70,6 +71,7 @@ fn rocket() -> _ {
             admin_unauthenticated,
             new_profile_form,
             activate_profile_form,
+            delete_profile_form,
         ],
     )
 }

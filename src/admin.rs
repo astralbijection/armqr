@@ -135,7 +135,7 @@ pub struct ActivateProfileForm<'a> {
     id: &'a str,
 }
 
-#[post("/admin/activeProfile", data = "<form>")]
+#[post("/admin/activateProfile", data = "<form>")]
 pub async fn activate_profile_form(
     _admin: AdminUser,
     form: Form<ActivateProfileForm<'_>>,
@@ -156,6 +156,37 @@ pub async fn activate_profile_form(
     }
 
     config.current_profile_id = uuid;
+
+    {
+        let mut lock = state.config.lock().await;
+        lock.store(config).await;
+    }
+
+    Redirect::to("/admin")
+}
+
+#[derive(FromForm)]
+pub struct DeleteProfileForm<'a> {
+    id: &'a str,
+}
+
+#[post("/admin/deleteProfile", data = "<form>")]
+pub async fn delete_profile_form(
+    _admin: AdminUser,
+    form: Form<DeleteProfileForm<'_>>,
+    state: &State<ArmQRState>,
+) -> Redirect {
+    let uuid = match Uuid::from_str(form.id) {
+        Ok(uuid) => uuid,
+        Err(_) => return Redirect::to("/admin?error=bad_uuid"),
+    };
+
+    let mut config = {
+        let lock = state.config.lock().await;
+        lock.read().clone()
+    };
+
+    config.profiles.remove(&uuid);
 
     {
         let mut lock = state.config.lock().await;
