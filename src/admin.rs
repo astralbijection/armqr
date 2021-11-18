@@ -1,5 +1,5 @@
 use rocket::form::Form;
-use std::env;
+use std::{env, str::FromStr};
 use uuid::Uuid;
 
 use crate::{
@@ -23,7 +23,7 @@ use crate::{config::Config, ArmQRState};
 #[template(path = "admin.html")]
 pub struct AdminPage<'a> {
     pub config: &'a Config,
-    pub error: &'a str,
+    pub error: Option<&'a str>,
 }
 
 #[derive(Debug)]
@@ -77,7 +77,7 @@ pub fn admin_unauthenticated() -> RequiresBasicAuthentication {
 #[get("/admin?<error>", rank = 1)]
 pub async fn admin_page(
     _admin: AdminUser,
-    error: &'_ str,
+    error: Option<&'_ str>,
     state: &State<ArmQRState>,
 ) -> Html<String> {
     let page = {
@@ -96,6 +96,7 @@ pub struct NewProfileForm<'r> {
 
 #[post("/admin/profiles", data = "<form>")]
 pub async fn new_profile_form(
+    _admin: AdminUser,
     form: Form<NewProfileForm<'_>>,
     state: &State<ArmQRState>,
 ) -> Redirect {
@@ -112,11 +113,49 @@ pub async fn new_profile_form(
         Some(x) => x.to_string(),
         None => format!("Redirect: {}", form.redirect_uri),
     };
-    config.profiles.push(Profile {
-        id: Uuid::new_v4(),
-        name,
-        action: Action::Redirect(form.redirect_uri.to_string()),
-    });
+    let id = Uuid::new_v4();
+    config.profiles.insert(
+        id,
+        Profile {
+            name,
+            action: Action::Redirect(form.redirect_uri.to_string()),
+        },
+    );
+
+    {
+        let mut lock = state.config.lock().await;
+        lock.store(config).await;
+    }
+
+    Redirect::to("/admin")
+}
+
+#[derive(FromForm)]
+pub struct ActivateProfileForm<'a> {
+    id: &'a str,
+}
+
+#[post("/admin/activeProfile", data = "<form>")]
+pub async fn activate_profile_form(
+    _admin: AdminUser,
+    form: Form<ActivateProfileForm<'_>>,
+    state: &State<ArmQRState>,
+) -> Redirect {
+    let uuid = match Uuid::from_str(form.id) {
+        Ok(uuid) => uuid,
+        Err(_) => return Redirect::to("/admin?error=bad_uuid"),
+    };
+
+    let mut config = {
+        let lock = state.config.lock().await;
+        lock.read().clone()
+    };
+
+    if !config.profiles.contains_key(&uuid) {
+        return Redirect::to("/admin?error=bad_uuid");
+    }
+
+    config.current_profile_id = uuid;
 
     {
         let mut lock = state.config.lock().await;

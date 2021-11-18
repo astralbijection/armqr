@@ -12,8 +12,7 @@
     <div class="container">
         <h1>Admin Panel</h1>
 
-
-        {% if error == "bad_uri" %}
+        {% if error.is_some() && error.unwrap() == "bad_uri" %}
             <div class="alert alert-danger" role="alert">
                 You supplied an empty URL!
             </div>
@@ -21,7 +20,7 @@
 
         <p>
             <strong>Current profile:</strong>
-            <a href="/admin/profiles/{{config.current_profile.id}}">{{config.current_profile.name}}</a>
+            <a href="/admin/profiles/{{config.current_profile_id}}">{{config.current_profile().name}}</a>
         </p>
 
         <h2>Create profile</h2>
@@ -43,12 +42,12 @@
                 </tr>
             </thead>
             <tbody>
-            {% for profile in config.profiles %}
-                <tr id="row={{profile.id}}">
-                    <th><a href="/admin/profiles/{{profile.id}}">{{profile.name}}</a></th>
+            {% for (id, profile) in config.profiles %}
+                <tr id="row={{id}}">
+                    <th><a href="/admin/profiles/{{id}}">{{profile.name}}</a></th>
                     <td>
-                        <form method="PUT" action="/admin/activeProfile">
-                            {% if profile.id == config.current_profile.id %} 
+                        <form method="POST" action="/admin/activeProfile">
+                            {% if id.clone() == config.current_profile_id %} 
                                 <input
                                     type="submit"
                                     class="btn btn-primary btn-sm"
@@ -60,17 +59,17 @@
                                     class="btn btn-primary btn-sm"
                                     value="Activate">
                             {% endif %}
-                            <input type="hidden" name="id" value="{{profile.id}}">
+                            <input type="hidden" name="id" value="{{id}}">
                         </form>
                     <td>
-                        <form method="DELETE" action="/admin/profiles/{{profile.id}}">
+                        <form method="DELETE" action="/admin/profiles/{{id}}">
                             {% if profile.is_locked() %}
                             <input
                                 type="submit"
                                 class="btn btn-danger btn-sm"
                                 value="Locked"
                                 disabled>
-                            {% else if profile.id == config.current_profile.id %}
+                            {% else if id.clone() == config.current_profile_id %}
                             <input
                                 type="submit"
                                 class="btn btn-danger btn-sm"

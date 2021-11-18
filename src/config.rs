@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     error::Error,
     path::{Path, PathBuf},
 };
@@ -12,13 +13,12 @@ pub struct ConfigFile {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Config {
-    pub current_profile: Profile,
-    pub profiles: Vec<Profile>,
+    pub current_profile_id: Uuid,
+    pub profiles: HashMap<Uuid, Profile>,
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Profile {
-    pub id: Uuid,
     pub name: String,
     pub action: Action,
 }
@@ -35,16 +35,26 @@ impl Profile {
     }
 }
 
+impl Config {
+    pub fn current_profile(&self) -> &Profile {
+        return &self.profiles[&self.current_profile_id];
+    }
+}
+
 impl Default for Config {
     fn default() -> Self {
         let linktree = Profile {
-            id: Uuid::new_v4(),
             name: "Linktree".to_string(),
             action: Action::Linktree,
         };
+
+        let id = Uuid::new_v4();
+        let mut profiles = HashMap::new();
+        profiles.insert(id, linktree);
+
         Self {
-            current_profile: linktree.clone(),
-            profiles: vec![linktree],
+            current_profile_id: id,
+            profiles,
         }
     }
 }
@@ -60,7 +70,8 @@ impl ConfigFile {
                 use std::fs;
 
                 let config = Config::default();
-                let json = serde_json::to_string_pretty(&config).expect("error while building JSON");
+                let json =
+                    serde_json::to_string_pretty(&config).expect("error while building JSON");
                 fs::write(&path, json).expect("Failure to write");
                 ConfigFile {
                     path,
