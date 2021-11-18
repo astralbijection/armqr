@@ -8,13 +8,15 @@ extern crate serde;
 extern crate dotenv;
 
 use crate::admin::activate_profile_form;
-use crate::admin::delete_profile_form;
 use crate::admin::admin_page;
 use crate::admin::admin_unauthenticated;
+use crate::admin::delete_profile_form;
 use crate::admin::new_profile_form;
 use crate::config::ConfigFile;
+use config::Action;
 use rocket::response::content::Html;
 use rocket::tokio::sync::Mutex;
+use rocket::State;
 use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -25,7 +27,20 @@ use rocket::response::Redirect;
 use rocket::response::Responder;
 
 #[get("/")]
-fn index() -> Html<String> {
+async fn index(state: &State<ArmQRState>) -> Redirect {
+    let profile = {
+        let lock = state.config.lock().await;
+        lock.read().current_profile().clone()
+    };
+
+    match profile.action {
+        Action::Redirect(uri) => Redirect::to(uri),
+        Action::Linktree => Redirect::to("/landing"),
+    }
+}
+
+#[get("/landing")]
+fn linktree() -> Html<String> {
     let fun_fact = "The airspeed velocity of an unladen swallow is 9 meters per second.";
     Html(LinktreeTemplate { fun_fact }.render().unwrap())
 }
@@ -66,6 +81,7 @@ fn rocket() -> _ {
         "/",
         routes![
             index,
+            linktree,
             cool_news,
             admin_page,
             admin_unauthenticated,
