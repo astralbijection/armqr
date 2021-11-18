@@ -52,9 +52,21 @@ struct LinktreeTemplate<'a> {
 }
 
 #[get("/cool-news")]
-fn cool_news() -> Redirect {
-    // An interesting CNN report
-    Redirect::to("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+fn cool_news() -> Html<String> {
+    Html(
+        RedirectTemplate {
+            // An interesting CNN report
+            escaped_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        }
+        .render()
+        .unwrap(),
+    )
+}
+
+#[derive(Template)]
+#[template(path = "redirect.html")]
+struct RedirectTemplate<'a> {
+    escaped_url: &'a str,
 }
 
 fn ensure_environment(key: &str) {

@@ -37,7 +37,7 @@ impl Profile {
 
 impl Config {
     pub fn current_profile(&self) -> &Profile {
-        return &self.profiles[&self.current_profile_id];
+        &self.profiles[&self.current_profile_id]
     }
 }
 
