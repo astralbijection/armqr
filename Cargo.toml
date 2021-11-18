@@ -7,3 +7,9 @@ askama = "*"
 base64 = "*"
 dotenv = "*"
 rocket = "0.5.0-rc.1"
+serde = "*"
+serde_json = "*"
+
+[dependencies.uuid]
+features = ["serde", "v4"]
+version = "*"
