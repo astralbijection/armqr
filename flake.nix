@@ -16,79 +16,63 @@
   };
 
   outputs = { self, nixpkgs, utils, rust-overlay, crate2nix, ... }:
-    let
-      name = "armqr";
-    in
-    utils.lib.eachDefaultSystem
-      (system:
-        let
-          # Imports
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [
-              rust-overlay.overlay
-              (self: super: {
-                rustc = self.rust-bin.nightly.latest.default;
-                cargo = self.rust-bin.nightly.latest.default;
-              })
-            ];
-          };
-          inherit (import "${crate2nix}/tools.nix" { inherit pkgs; })
-            generatedCargoNix;
-
-          # Create the cargo2nix project
-          project = pkgs.callPackage
-            (generatedCargoNix {
-              inherit name;
-              src = ./.;
+    let name = "armqr";
+    in utils.lib.eachDefaultSystem (system:
+      let
+        # Imports
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [
+            rust-overlay.overlay
+            (self: super: {
+              rustc = self.rust-bin.nightly.latest.default;
+              cargo = self.rust-bin.nightly.latest.default;
             })
-            {
-              defaultCrateOverrides = pkgs.defaultCrateOverrides // {
-                ${name} = oldAttrs: {
-                  inherit buildInputs nativeBuildInputs;
-                } // buildEnvVars;
-              };
-            };
+          ];
+        };
+        inherit (import "${crate2nix}/tools.nix" { inherit pkgs; })
+          generatedCargoNix;
 
-          # Configuration for the non-Rust dependencies
-          buildInputs = with pkgs; [ openssl.dev makeWrapper ];
-          nativeBuildInputs = with pkgs; [ rustc cargo pkgconfig nixpkgs-fmt ];
-          buildEnvVars = {
-            PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
+        # Create the cargo2nix project
+        project = pkgs.callPackage (generatedCargoNix {
+          inherit name;
+          src = ./.;
+        }) {
+          defaultCrateOverrides = pkgs.defaultCrateOverrides // {
+            ${name} = oldAttrs:
+              {
+                inherit buildInputs nativeBuildInputs;
+              } // buildEnvVars;
           };
-        in
-        rec {
-          packages.${name} = project.rootCrate.build;
+        };
 
-          nixosModules.default = import ./nixos-module.nix;
+        # Configuration for the non-Rust dependencies
+        buildInputs = with pkgs; [ openssl.dev makeWrapper ];
+        nativeBuildInputs = with pkgs; [ rustc cargo pkgconfig nixpkgs-fmt ];
+        buildEnvVars = {
+          PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
+        };
+      in rec {
+        packages = {
+          default = packages.armqr;
+          armqr = project.rootCrate.build;
+        };
 
-          dockerImages.${name} = 
-            let 
-              app = self.packages.${system}.${name};
-            in pkgs.dockerTools.buildImage {
-              name = "ghcr.io/astralbijection/${name}";
-              contents = app;
-              config = {
-                Cmd = [ "${app}/bin/${name}" ];
-              };
-            };
+        nixosModules.default = import ./nixos-module.nix;
 
-          # `nix build`
-          defaultPackage = packages.${name};
-
-          # `nix run`
-          apps.${name} = utils.lib.mkApp {
+        apps = {
+          armqr = utils.lib.mkApp {
             inherit name;
-            drv = packages.${name};
+            drv = packages.armqr;
           };
-          defaultApp = apps.${name};
+          default = apps.armqr;
+        };
 
-          # `nix develop`
-          devShell = pkgs.mkShell
-            {
-              inherit buildInputs nativeBuildInputs;
-              RUST_SRC_PATH = "${pkgs.rust.packages.nightly.rustPlatform.rustLibSrc}";
-            } // buildEnvVars;
-        }
-      );
+        # `nix develop`
+        devShell = pkgs.mkShell {
+          inherit buildInputs nativeBuildInputs;
+          RUST_SRC_PATH =
+            "${pkgs.rust.packages.nightly.rustPlatform.rustLibSrc}";
+        } // buildEnvVars;
+      });
 }

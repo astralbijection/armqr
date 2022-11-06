@@ -31,18 +31,3 @@ jobs:
 
     - name: Build armqr binary
       run: nix build --no-link .#armqr
-
-    - name: Build armqr Docker image
-      run: >
-        docker load -i $(nix build --json --no-link .#dockerImages.x86_64-linux.armqr | jq -r '.[0].outputs.out')
-        | sed -r 's/Loaded image: (.*)$/\1/'
-        | tr -d '\n'
-        | tee ./imagetag
-
-    - name: Tag as latest
-      run: >
-        docker tag "$(<./imagetag)" ghcr.io/astralbijection/armqr:latest
-      if: github.ref == 'refs/heads/main'
-
-    - name: Push Docker images
-      run: docker push -a ghcr.io/astralbijection/armqr
