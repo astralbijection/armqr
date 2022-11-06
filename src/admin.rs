@@ -1,5 +1,5 @@
-use rocket::{form::Form, response::content::RawHtml, Build, Phase, Rocket, State};
-use std::{env, str::FromStr};
+use rocket::{form::Form, response::content::RawHtml, Phase, Rocket, State};
+use std::str::FromStr;
 use uuid::Uuid;
 
 use crate::{
@@ -51,7 +51,7 @@ impl AdminUser {
         rocket
             .figment()
             .extract::<AdminPassword>()
-            .expect("admin_password is missing")
+            .expect("admin_password was not provided!")
             .admin_password
     }
 }

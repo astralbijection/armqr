@@ -13,10 +13,10 @@ use crate::admin::admin_unauthenticated;
 use crate::admin::delete_profile_form;
 use crate::admin::new_profile_form;
 use crate::config::ConfigFile;
+use admin::AdminUser;
 use config::Action;
 use rocket::tokio::sync::Mutex;
 use rocket::State;
-use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -43,12 +43,6 @@ struct RedirectTemplate<'a> {
     escaped_url: &'a str,
 }
 
-fn ensure_environment(key: &str) {
-    if env::var(key).is_err() {
-        panic!("Required environment variable not provided: {}", key)
-    }
-}
-
 pub struct ArmQRState {
     config: Arc<Mutex<ConfigFile>>,
 }
@@ -61,7 +55,9 @@ fn rocket() -> _ {
         config: Arc::new(Mutex::new(ConfigFile::new(PathBuf::from("./armqr.json")))),
     };
 
-    rocket::build().manage(state).mount(
+    let rocket = rocket::build();
+    AdminUser::extract_password(&rocket);
+    rocket.manage(state).mount(
         "/",
         routes![
             index,
