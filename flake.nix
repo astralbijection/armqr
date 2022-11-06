@@ -24,14 +24,18 @@
           rust-overlay.overlays.default
           naersk.overlay
           (final: prev: {
-            rust-toolchain = final.rust-bin.nightly."2022-11-06".rust;
+            rust-toolchain = final.rust-bin.nightly."2022-09-15";
+            naersk = prev.naersk.override {
+              rustc = final.rust-toolchain.minimal;
+              cargo = final.rust-toolchain.minimal;
+            };
 
             armqr = with final;
               final.naersk.buildPackage {
                 src = ./.;
 
-                buildInputs = [ openssl.dev makeWrapper ];
-                nativeBuildInputs = [ pkgconfig nixpkgs-fmt ];
+                buildInputs = [ openssl.dev ];
+                nativeBuildInputs = [ pkgconfig ];
                 PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
               };
           })
@@ -59,11 +63,13 @@
 
         nixosModules.default = import ./nixos-module.nix;
 
-        # `nix develop`
-        devShell = with pkgs;
+        devShells.default = with pkgs;
           mkShell {
-            buildInputs =
-              [ (rust-toolchain.override { extensions = [ "rust-src" ]; }) ];
+            buildInputs = [
+              (rust-toolchain.default.override {
+                extensions = [ "rust-src" "rust-analysis" "clippy" "rustfmt" ];
+              })
+            ];
           };
       });
 }
