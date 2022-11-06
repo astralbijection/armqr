@@ -5,74 +5,65 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     utils.url = "github:numtide/flake-utils";
     rust-overlay.url = "github:oxalica/rust-overlay";
-    crate2nix = {
-      url = "github:kolloch/crate2nix";
-      flake = false;
-    };
+    naersk.url = "github:nix-community/naersk/master";
     flake-compat = {
       url = "github:edolstra/flake-compat";
       flake = false;
     };
   };
 
-  outputs = { self, nixpkgs, utils, rust-overlay, crate2nix, ... }:
-    let name = "armqr";
-    in utils.lib.eachDefaultSystem (system:
+  outputs = { self, nixpkgs, utils, rust-overlay, naersk, ... }:
+    let inherit (nixpkgs) lib;
+    in {
+      overlays = {
+        default = final: prev: {
+          inherit (self.packages.${prev.system}) armqr;
+        };
+
+        build = lib.composeManyExtensions [
+          rust-overlay.overlays.default
+          naersk.overlay
+          (final: prev: {
+            rust-toolchain = final.rust-bin.nightly."2022-11-06".rust;
+
+            armqr = with final;
+              final.naersk.buildPackage {
+                src = ./.;
+
+                buildInputs = [ openssl.dev makeWrapper ];
+                nativeBuildInputs = [ pkgconfig nixpkgs-fmt ];
+                PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
+              };
+          })
+        ];
+      };
+    } // utils.lib.eachDefaultSystem (system:
       let
-        # Imports
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [
-            rust-overlay.overlay
-            (self: super: {
-              rustc = self.rust-bin.nightly.latest.default;
-              cargo = self.rust-bin.nightly.latest.default;
-            })
-          ];
-        };
-        inherit (import "${crate2nix}/tools.nix" { inherit pkgs; })
-          generatedCargoNix;
-
-        # Create the cargo2nix project
-        project = pkgs.callPackage (generatedCargoNix {
-          inherit name;
-          src = ./.;
-        }) {
-          defaultCrateOverrides = pkgs.defaultCrateOverrides // {
-            ${name} = oldAttrs:
-              {
-                inherit buildInputs nativeBuildInputs;
-              } // buildEnvVars;
-          };
-        };
-
-        # Configuration for the non-Rust dependencies
-        buildInputs = with pkgs; [ openssl.dev makeWrapper ];
-        nativeBuildInputs = with pkgs; [ rustc cargo pkgconfig nixpkgs-fmt ];
-        buildEnvVars = {
-          PKG_CONFIG_PATH = "${pkgs.openssl.dev}/lib/pkgconfig";
+          overlays = [ self.overlays.build ];
         };
       in rec {
         packages = {
           default = packages.armqr;
-          armqr = project.rootCrate.build;
+          armqr = pkgs.armqr;
         };
-
-        nixosModules.default = import ./nixos-module.nix;
 
         apps = {
           armqr = utils.lib.mkApp {
-            inherit name;
+            name = "armqr";
             drv = packages.armqr;
           };
           default = apps.armqr;
         };
 
+        nixosModules.default = import ./nixos-module.nix;
+
         # `nix develop`
-        devShell = pkgs.mkShell {
-          inherit buildInputs nativeBuildInputs;
-          RUST_SRC_PATH =
-            "${pkgs.rust.packages.nightly.rustPlatform.rustLibSrc}";
-        } // buildEnvVars;
+        devShell = with pkgs;
+          mkShell {
+            buildInputs =
+              [ (rust-toolchain.override { extensions = [ "rust-src" ]; }) ];
+          };
       });
 }
