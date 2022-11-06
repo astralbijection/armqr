@@ -24,7 +24,7 @@
           rust-overlay.overlays.default
           naersk.overlay
           (final: prev: {
-            rust-toolchain = final.rust-bin.nightly."2022-09-15";
+            rust-toolchain = final.rust-bin.nightly."2022-11-04";
             naersk = prev.naersk.override {
               rustc = final.rust-toolchain.minimal;
               cargo = final.rust-toolchain.minimal;
