@@ -1,8 +1,5 @@
-# This file is pretty general, and you can adapt it in your project replacing
-# only `name` and `description` below.
-
 {
-  description = "...";
+  description = "QR Tattoo Redirector";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
@@ -62,6 +59,8 @@
         in
         rec {
           packages.${name} = project.rootCrate.build;
+
+          nixosModules.default = import ./nixos-module.nix;
 
           dockerImages.${name} = 
             let 
