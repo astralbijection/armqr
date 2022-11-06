@@ -56,8 +56,6 @@ pub struct ArmQRState {
 #[launch]
 fn rocket() -> _ {
     dotenv().ok();
-    ensure_environment("ADMIN_USER");
-    ensure_environment("ADMIN_PASSWORD");
 
     let state = ArmQRState {
         config: Arc::new(Mutex::new(ConfigFile::new(PathBuf::from("./armqr.json")))),
