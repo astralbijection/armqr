@@ -1,4 +1,4 @@
-use rocket::form::Form;
+use rocket::{form::Form, response::content::RawHtml, State};
 use std::{env, str::FromStr};
 use uuid::Uuid;
 
@@ -15,7 +15,6 @@ use rocket::{
 };
 
 use askama::Template;
-use rocket::{response::content::Html, State};
 
 use crate::{config::Config, ArmQRState};
 
@@ -79,13 +78,13 @@ pub async fn admin_page(
     _admin: AdminUser,
     error: Option<&'_ str>,
     state: &State<ArmQRState>,
-) -> Html<String> {
+) -> RawHtml<String> {
     let page = {
         let lock = state.config.lock().await;
         let config = lock.read();
         AdminPage { config, error }.render().unwrap()
     };
-    Html(page)
+    RawHtml(page)
 }
 
 #[derive(FromForm)]

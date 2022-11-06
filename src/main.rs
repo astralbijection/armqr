@@ -14,7 +14,6 @@ use crate::admin::delete_profile_form;
 use crate::admin::new_profile_form;
 use crate::config::ConfigFile;
 use config::Action;
-use rocket::response::content::Html;
 use rocket::tokio::sync::Mutex;
 use rocket::State;
 use std::env;
@@ -35,32 +34,7 @@ async fn index(state: &State<ArmQRState>) -> Redirect {
 
     match profile.action {
         Action::Redirect(uri) => Redirect::to(uri),
-        Action::Linktree => Redirect::to("/landing"),
     }
-}
-
-#[get("/landing")]
-fn linktree() -> Html<String> {
-    let fun_fact = "The airspeed velocity of an unladen swallow is 9 meters per second.";
-    Html(LinktreeTemplate { fun_fact }.render().unwrap())
-}
-
-#[derive(Template)]
-#[template(path = "linktree.html")]
-struct LinktreeTemplate<'a> {
-    fun_fact: &'a str,
-}
-
-#[get("/cool-news")]
-fn cool_news() -> Html<String> {
-    Html(
-        RedirectTemplate {
-            // An interesting CNN report
-            escaped_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-        }
-        .render()
-        .unwrap(),
-    )
 }
 
 #[derive(Template)]
@@ -93,8 +67,6 @@ fn rocket() -> _ {
         "/",
         routes![
             index,
-            linktree,
-            cool_news,
             admin_page,
             admin_unauthenticated,
             new_profile_form,

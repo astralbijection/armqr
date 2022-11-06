@@ -18,11 +18,6 @@
             </div>
         {% endif %}
 
-        <p>
-            <strong>Current profile:</strong>
-            <a href="/admin/profiles/{{config.current_profile_id}}">{{config.current_profile().name}}</a>
-        </p>
-
         <h2>Create profile</h2>
         <form method="POST" action="/admin/profiles">
             <div class="input-group mb-3">
@@ -63,13 +58,7 @@
                         </form>
                     <td>
                         <form method="POST" action="/admin/deleteProfile">
-                            {% if profile.is_locked() %}
-                            <input
-                                type="submit"
-                                class="btn btn-danger btn-sm"
-                                value="Locked"
-                                disabled>
-                            {% else if id.clone() == config.current_profile_id %}
+                            {% if id.clone() == config.current_profile_id %}
                             <input
                                 type="submit"
                                 class="btn btn-danger btn-sm"

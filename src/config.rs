@@ -26,13 +26,6 @@ pub struct Profile {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum Action {
     Redirect(String),
-    Linktree,
-}
-
-impl Profile {
-    pub fn is_locked(&self) -> bool {
-        matches!(self.action, Action::Linktree)
-    }
 }
 
 impl Config {
@@ -43,18 +36,18 @@ impl Config {
 
 impl Default for Config {
     fn default() -> Self {
-        let linktree = Profile {
-            name: "Linktree".to_string(),
-            action: Action::Linktree,
+        let uuid = Uuid::new_v4();
+        let mut map = HashMap::new();
+        let profile = Profile {
+            name: "https://astrid.tech".to_owned(),
+            action: Action::Redirect("https://astrid.tech".to_owned()),
         };
 
-        let id = Uuid::new_v4();
-        let mut profiles = HashMap::new();
-        profiles.insert(id, linktree);
+        map.insert(uuid, profile);
 
         Self {
-            current_profile_id: id,
-            profiles,
+            current_profile_id: uuid,
+            profiles: map,
         }
     }
 }
