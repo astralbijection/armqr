@@ -41,6 +41,8 @@
           })
         ];
       };
+
+      nixosModules.default = import ./nixos-module.nix;
     } // utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
@@ -60,8 +62,6 @@
           };
           default = apps.armqr;
         };
-
-        nixosModules.default = import ./nixos-module.nix;
 
         devShells.default = with pkgs;
           mkShell {

@@ -5,17 +5,17 @@ let
 in with lib; {
   options.services.armqr = {
     enable = mkEnableOption "armqr";
-    user = {
+    user = mkOption {
       type = types.str;
       description = "User to run under";
       default = defaultUser;
     };
-    group = {
+    group = mkOption {
       type = types.str;
       description = "Group to run under";
       default = defaultUser;
     };
-    port = {
+    port = mkOption {
       type = types.port;
       description = "Port to listen on";
     };
@@ -37,8 +37,17 @@ in with lib; {
       wantedBy = [ "network-online.target" ];
       path = with pkgs; [ armqr ];
       environment = {
-        ROCKET_STATE_FILE_PATH = cfg.stateFile;
+        ROCKET_STATE_FILE_PATH = "${cfg.stateDir}/armqr.json";
         PASSWORD_FILE_PATH = cfg.passwordFile;
+      };
+
+      preStart = ''
+        mkdir -p "$(dirname "$ROCKET_STATE_FILE_PATH")"
+      '';
+
+      unitConfig = {
+        # Password file must exist to run this service 
+        ConditionPathExists = [ cfg.passwordFile ];
       };
 
       serviceConfig = {
