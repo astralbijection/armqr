@@ -17,7 +17,6 @@ use admin::AdminUser;
 use config::Action;
 use rocket::tokio::sync::Mutex;
 use rocket::State;
-use std::path::PathBuf;
 use std::sync::Arc;
 
 use askama::Template;
@@ -51,11 +50,10 @@ pub struct ArmQRState {
 fn rocket() -> _ {
     dotenv().ok();
 
-    let state = ArmQRState {
-        config: Arc::new(Mutex::new(ConfigFile::new(PathBuf::from("./armqr.json")))),
-    };
-
     let rocket = rocket::build();
+    let state = ArmQRState {
+        config: Arc::new(Mutex::new(ConfigFile::extract_from_config(&rocket))),
+    };
     AdminUser::extract_password(&rocket);
     rocket.manage(state).mount(
         "/",

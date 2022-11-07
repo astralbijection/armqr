@@ -4,6 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use rocket::{Phase, Rocket};
 use uuid::Uuid;
 
 pub struct ConfigFile {
@@ -53,6 +54,25 @@ impl Default for Config {
 }
 
 impl ConfigFile {
+    pub fn extract_from_config(rocket: &Rocket<impl Phase>) -> Self {
+        #[derive(Deserialize)]
+        #[serde(crate = "rocket::serde")]
+        struct ConfigFilePath {
+            // Plaintext password. Yes, this is probably fine.
+            state_file_path: String,
+        }
+
+        let path = PathBuf::from(
+            rocket
+                .figment()
+                .extract::<ConfigFilePath>()
+                .expect("state_file_path was not provided!")
+                .state_file_path,
+        );
+
+        Self::new(path)
+    }
+
     pub fn new(path: PathBuf) -> Self {
         match ConfigFile::read_file(path.as_ref()) {
             Ok(config) => ConfigFile {
