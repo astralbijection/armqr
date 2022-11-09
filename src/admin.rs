@@ -1,5 +1,5 @@
-use rocket::form::Form;
-use std::{env, str::FromStr};
+use rocket::{form::Form, response::content::RawHtml, Phase, Rocket, State};
+use std::str::FromStr;
 use uuid::Uuid;
 
 use crate::{
@@ -15,7 +15,6 @@ use rocket::{
 };
 
 use askama::Template;
-use rocket::{response::content::Html, State};
 
 use crate::{config::Config, ArmQRState};
 
@@ -40,6 +39,23 @@ impl<'r> Responder<'r, 'static> for RequiresBasicAuthentication {
 
 pub struct AdminUser;
 
+impl AdminUser {
+    pub fn extract_password(rocket: &Rocket<impl Phase>) -> String {
+        #[derive(Deserialize)]
+        #[serde(crate = "rocket::serde")]
+        struct AdminPassword {
+            // Plaintext password. Yes, this is probably fine.
+            admin_password: String,
+        }
+
+        rocket
+            .figment()
+            .extract::<AdminPassword>()
+            .expect("admin_password was not provided!")
+            .admin_password
+    }
+}
+
 #[rocket::async_trait]
 impl<'r> FromRequest<'r> for AdminUser {
     type Error = RequiresBasicAuthentication;
@@ -47,15 +63,7 @@ impl<'r> FromRequest<'r> for AdminUser {
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         let expected_auth = format!(
             "Basic {}",
-            base64::encode(
-                format!(
-                    "{}:{}",
-                    env::var("ADMIN_USER").unwrap(),
-                    // Yes, the password is plaintext. Yes, I use a password manager.
-                    env::var("ADMIN_PASSWORD").unwrap()
-                )
-                .as_bytes()
-            )
+            base64::encode(format!("admin:{}", Self::extract_password(req.rocket())).as_bytes())
         );
 
         if let Some(header) = req.headers().get_one("Authorization") {
@@ -79,13 +87,13 @@ pub async fn admin_page(
     _admin: AdminUser,
     error: Option<&'_ str>,
     state: &State<ArmQRState>,
-) -> Html<String> {
+) -> RawHtml<String> {
     let page = {
         let lock = state.config.lock().await;
         let config = lock.read();
         AdminPage { config, error }.render().unwrap()
     };
-    Html(page)
+    RawHtml(page)
 }
 
 #[derive(FromForm)]

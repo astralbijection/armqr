@@ -1,0 +1,3 @@
+[debug]
+admin_password = "admin"
+state_file_path = "./armqr.json"

@@ -1,12 +1,13 @@
 [package]
 edition = "2021"
 name = "armqr"
-version = "0.1.0"
+version = "0.2.0"
+
 [dependencies]
 askama = "*"
 base64 = "*"
 dotenv = "*"
-rocket = "0.5.0-rc.1"
+rocket = "0.5.0-rc.2"
 serde = "*"
 serde_json = "*"
 
