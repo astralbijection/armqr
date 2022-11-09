@@ -48,7 +48,7 @@
         system = "x86_64-linux";
         modules = [
           self.nixosModules.default
-          ({ pkgs, lib, ... }: {
+          ({ pkgs, lib, config, ... }: {
             system.stateVersion = "22.11";
             nixpkgs.overlays = [ self.overlays.default ];
             services.armqr = {
@@ -64,8 +64,8 @@
             virtualisation.vmVariant = {
               virtualisation.forwardPorts = [{
                 from = "host";
-                host.port = 8080;
-                guest.port = 14323;
+                host.port = 8834;
+                guest.port = config.services.armqr.port;
               }];
             };
           })

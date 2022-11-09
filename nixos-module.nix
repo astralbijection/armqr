@@ -15,6 +15,11 @@ in with lib; {
       description = "Group to run under";
       default = defaultUser;
     };
+    address = mkOption {
+      type = types.str;
+      description = "Address to listen on";
+      default = "0.0.0.0";
+    };
     port = mkOption {
       type = types.port;
       description = "Port to listen on";
@@ -32,17 +37,32 @@ in with lib; {
   };
 
   config = mkIf cfg.enable {
+    systemd.services.armqr-config = {
+      environment = { inherit (cfg) stateDir passwordFile user group; };
+
+      script = ''
+        mkdir -p "$stateDir"
+        mkdir -p "$(dirname "$passwordFile")"
+
+        chown -R "$user:$group" "$stateDir" "$(dirname "$passwordFile")"
+      '';
+    };
+
     systemd.services.armqr = {
       description = "QR Tattoo Redirector";
       wantedBy = [ "network-online.target" ];
+      wants = [ "armqr-config.service" ];
       path = with pkgs; [ armqr ];
       environment = {
         ROCKET_STATE_FILE_PATH = "${cfg.stateDir}/armqr.json";
+        ROCKET_ADDRESS = cfg.address;
+        ROCKET_PORT = builtins.toString cfg.port;
         PASSWORD_FILE_PATH = cfg.passwordFile;
       };
 
-      preStart = ''
-        mkdir -p "$(dirname "$ROCKET_STATE_FILE_PATH")"
+      preStart = "";
+      script = ''
+        ROCKET_ADMIN_PASSWORD="$(cat "$PASSWORD_FILE_PATH")" armqr
       '';
 
       unitConfig = {
@@ -53,10 +73,6 @@ in with lib; {
       serviceConfig = {
         User = cfg.user;
         Group = cfg.group;
-
-        ExecStart = ''
-          ROCKET_ADMIN_PASSWORD="$(cat "$PASSWORD_FILE_PATH")" armqr
-        '';
 
         NoNewPrivileges = true;
         ReadWritePaths = [ cfg.stateDir ];
