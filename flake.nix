@@ -41,36 +41,6 @@
           })
         ];
       };
-
-      nixosModules.default = import ./nixos-module.nix;
-
-      nixosConfigurations.demo = lib.nixosSystem {
-        system = "x86_64-linux";
-        modules = [
-          self.nixosModules.default
-          ({ pkgs, lib, config, ... }: {
-            system.stateVersion = "22.11";
-            nixpkgs.overlays = [ self.overlays.default ];
-            services.armqr = {
-              enable = true;
-              port = 14323;
-            };
-            users.users.dev = {
-              isNormalUser = true;
-              password = "password";
-              extraGroups = [ "wheel" ];
-            };
-            security.sudo.wheelNeedsPassword = false;
-            virtualisation.vmVariant = {
-              virtualisation.forwardPorts = [{
-                from = "host";
-                host.port = 8834;
-                guest.port = config.services.armqr.port;
-              }];
-            };
-          })
-        ];
-      };
     } // utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
