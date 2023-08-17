@@ -1,3 +1,4 @@
+use base64::{engine::general_purpose, Engine as _};
 use rocket::{form::Form, response::content::RawHtml, Phase, Rocket, State};
 use std::str::FromStr;
 use uuid::Uuid;
@@ -63,7 +64,8 @@ impl<'r> FromRequest<'r> for AdminUser {
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error> {
         let expected_auth = format!(
             "Basic {}",
-            base64::encode(format!("admin:{}", Self::extract_password(req.rocket())).as_bytes())
+            general_purpose::STANDARD
+                .encode(format!("admin:{}", Self::extract_password(req.rocket())).as_bytes())
         );
 
         if let Some(header) = req.headers().get_one("Authorization") {
