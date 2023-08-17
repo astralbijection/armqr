@@ -5,7 +5,6 @@ mod config;
 extern crate rocket;
 #[macro_use]
 extern crate serde;
-extern crate dotenv;
 
 use crate::admin::activate_profile_form;
 use crate::admin::admin_page;
@@ -20,7 +19,6 @@ use rocket::State;
 use std::sync::Arc;
 
 use askama::Template;
-use dotenv::dotenv;
 use rocket::response::Redirect;
 use rocket::response::Responder;
 
@@ -48,8 +46,6 @@ pub struct ArmQRState {
 
 #[launch]
 fn rocket() -> _ {
-    dotenv().ok();
-
     let rocket = rocket::build();
     let state = ArmQRState {
         config: Arc::new(Mutex::new(ConfigFile::extract_from_config(&rocket))),
